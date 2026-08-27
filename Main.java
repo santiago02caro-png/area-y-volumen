@@ -2,316 +2,223 @@ import java.util.Scanner;
 
 public class Main {
 
-    // Scanner unico, compartido por todas las funciones del programa.
-    static Scanner scanner = new Scanner(System.in);
+    public static String[] nombre = new String[100];
+    public static float[] sueldo = new float[100];
+    public static String[] cargo = new String[100];
+    public static int totalEmpleados = 0; 
 
-    /**
-     * Metodo principal. Es el punto de entrada del programa.
-     * Se encarga de mostrar el menu principal (Area / Volumen / Salir).
-     */
+    static Scanner entrada = new Scanner(System.in);
+
     public static void main(String[] args) {
 
-        int opcion;
+        System.out.println("DATOS DE LOS EMPLEADOS");
 
+        totalEmpleados = llenarArreglos();
+
+        int opcion;
         do {
-            opcion = menu("1- Calcular Area\n2- Calcular Volumen\n3- Salir", 3);
+            limpiarPantalla();
+            mostrarMenu();
+            opcion = leerEntero("Seleccione una opción: ");
 
             switch (opcion) {
-                case 1:
-                    menuAreas();
-                    break;
-                case 2:
-                    menuVolumenes();
-                    break;
-                case 3:
-                    salir();
-                    break;
+                case 1 -> { crearEmpleado(); pausar(); }
+                case 2 -> { listarEmpleados(); pausar(); }
+                case 3 -> { actualizarEmpleado(); pausar(); }
+                case 4 -> { eliminarEmpleado(); pausar(); }
+                case 5 -> System.out.println("Saliendo del programa. ¡Hasta luego!");
+                default -> { System.out.println("Opción no válida. Intente de nuevo."); pausar(); }
             }
+            System.out.println();
 
-        } while (opcion != 3);
+        } while (opcion != 5);
 
-        scanner.close();
+        entrada.close();
     }
 
-    // ==========================================================
-    //                  FUNCIONES DE SOPORTE
-    // ==========================================================
+    // ponemos una pausa antes de borrar y como confirmacion para ir limpiando la pantalla dejamos enter
+    public static void pausar() {
+        System.out.println();
+        System.out.print("Presione ENTER para volver al menú...");
+        entrada.nextLine();
+    }
 
-    /**
-     * Borra todo el contenido de la consola usando codigos de escape ANSI.
-     * Se llama antes de mostrar cada nueva pantalla para solo ver una informacion 
-     */
+    // ---------- Limpieza de pantalla ----------
     public static void limpiarPantalla() {
+        // limpia usando secuencias ANSI 
         System.out.print("\033[H\033[2J");
         System.out.flush();
+        // Alternativa por si la terminal no soporta ANSI
+        for (int i = 0; i < 50; i++) {
+            System.out.println();
+        }
     }
 
-    /**
-     * Detiene la ejecucion del programa hasta que el usuario presione Enter.
-     * Se hacen DOS lecturas con nextLine():
-     *   1) La primera "limpia" el salto de linea (\n) que quedo pendiente
-     *      en el buffer despues de usar nextInt() o nextDouble().
-     *   2) La segunda si espera realmente a que el usuario presione Enter.
-     */
-    public static void pausar() {
-        System.out.println("\nPresione Enter para continuar...");
-        scanner.nextLine();
-        scanner.nextLine();
+    // Menú principal
+    public static void mostrarMenu() {
+        System.out.println("===== MENÚ DE GESTIÓN DE EMPLEADOS =====");
+        System.out.println("1. Crear empleado");
+        System.out.println("2. Listar empleados");
+        System.out.println("3. Actualizar empleado");
+        System.out.println("4. Eliminar empleado");
+        System.out.println("5. Salir");
+        System.out.println("=========================================");
     }
 
-    /**
-     * Dibuja una linea decorativa usada como borde superior e inferior
-     */
-    public static void linea() {
-        System.out.println("+-----------------------------------------------+");
+    // con esto al ejecutar nos pedira ingresar ususarios para registrsr antes de pasar al menu
+    public static int llenarArreglos() {
+
+        int n = leerEntero("¿Cuántos empleados desea registrar? ");
+
+        if (n > 100) {
+            n = 100;
+            System.out.println("Solo se pueden registrar máximo 100 empleados. Se ajustó a 100.");
+        }
+
+        for (int i = 0; i < n; i++) {
+            System.out.println();
+            System.out.println("EMPLEADO " + (i + 1));
+            leerDatos(i);
+        }
+
+        return n;
     }
 
-    /**
-     * Imprime el encabezado principal del sistema dentro de un recuadro.
-     */
-    public static void encabezado(){
-        linea();
-        System.out.println("|     SISTEMA DE AREAS Y VOLUMENES               |");
-        linea();
+    // creacion de empleados no supera los 100
+    public static void crearEmpleado() {
+
+        if (totalEmpleados >= 100) {
+            System.out.println("No se pueden registrar más empleados (límite alcanzado).");
+            return;
+        }
+
+        System.out.println("--- Nuevo empleado ---");
+        leerDatos(totalEmpleados);
+        totalEmpleados++;
+        System.out.println("Empleado registrado correctamente.");
     }
 
-    /**
-     * Funcion encargada UNICAMENTE de mostrar un menu y leer la opcion
-     * elegida por el usuario. No realiza ningun calculo ni redireccion:
-     * su unica responsabilidad es preguntar y validar que el numero
-     * digitado este dentro del rango permitido
-     */
-    public static int menu(String texto, int nroOpciones){
-        int opcion;
-        do{
-            limpiarPantalla();
-            encabezado();
-            String[] lineas = texto.split("\n");
-            for (String l : lineas) {
-                System.out.println("|  " + l);
+    // lee la lista de empleados 
+    public static void listarEmpleados() {
+
+        if (totalEmpleados == 0) {
+            System.out.println("No hay empleados registrados.");
+            return;
+        }
+
+        for (int i = 0; i < totalEmpleados; i++) {
+            System.out.println("-------------------");
+            System.out.println("Posición: " + i);
+            verDatos(i);
+        }
+    }
+
+    // actualizacion de empleados 
+    public static void actualizarEmpleado() {
+
+        listarEmpleados();
+        if (totalEmpleados == 0) return;
+
+        int pos = leerEntero("Ingrese la posición del empleado a actualizar: ");
+
+        if (!posicionValida(pos)) {
+            System.out.println("Posición inválida.");
+            return;
+        }
+
+        System.out.print("Nuevo nombre (" + nombre[pos] + ") - deje vacío para no cambiar: ");
+        String nuevoNombre = entrada.nextLine();
+        if (!nuevoNombre.isBlank()) nombre[pos] = nuevoNombre;
+
+        System.out.print("Nuevo cargo (" + cargo[pos] + ") - deje vacío para no cambiar: ");
+        String nuevoCargo = entrada.nextLine();
+        if (!nuevoCargo.isBlank()) cargo[pos] = nuevoCargo;
+
+        System.out.print("Nuevo sueldo (" + sueldo[pos] + ") - deje vacío para no cambiar: ");
+        String textoSueldo = entrada.nextLine();
+        if (!textoSueldo.isBlank()) {
+            try {
+                sueldo[pos] = Float.parseFloat(textoSueldo);
+            } catch (NumberFormatException e) {
+                System.out.println("Valor no válido, se mantiene el sueldo anterior.");
             }
-            System.out.println("|");
-            linea();
-            System.out.print("Digite su opcion: ");
-            opcion = scanner.nextInt();
-        } while (opcion < 1 || opcion > nroOpciones);
-        return opcion;
+        }
+
+        System.out.println("Empleado actualizado correctamente.");
     }
 
-    /**
-     * Pide al usuario un numero decimal y no continua hasta que digite
-     * un valor mayor que cero. ya que no tiene sentido numeros negativos 
-     */
-    public static double leerPositivo(String mensaje) {
-        double valor;
-        do {
+    // eliminar algun registro
+    public static void eliminarEmpleado() {
+
+        listarEmpleados();
+        if (totalEmpleados == 0) return;
+
+        int pos = leerEntero("Ingrese la posición del empleado a eliminar: ");
+
+        if (!posicionValida(pos)) {
+            System.out.println("Posición inválida.");
+            return;
+        }
+
+        // Desplaza una posición hacia atrás para no dejar huecos vacios
+        for (int i = pos; i < totalEmpleados - 1; i++) {
+            nombre[i] = nombre[i + 1];
+            cargo[i] = cargo[i + 1];
+            sueldo[i] = sueldo[i + 1];
+        }
+
+        totalEmpleados--;
+        System.out.println("Empleado eliminado correctamente.");
+    }
+
+    //  Métodos base de la clase 
+    public static void asignarValores(String nom, String car, float sue, int pos) {
+        nombre[pos] = nom;
+        cargo[pos] = car;
+        sueldo[pos] = sue;
+    }
+
+    public static void verDatos(int pos) {
+        System.out.println("Nombre del empleado: " + nombre[pos]);
+        System.out.println("Cargo del empleado: " + cargo[pos]);
+        System.out.println("Sueldo del empleado: " + sueldo[pos]);
+    }
+
+    public static void leerDatos(int pos) {
+
+        System.out.print("Escriba el nombre: ");
+        nombre[pos] = entrada.nextLine();
+
+        System.out.print("Escriba el cargo: ");
+        cargo[pos] = entrada.nextLine();
+
+        System.out.print("Escriba el sueldo: ");
+        sueldo[pos] = leerFloat();
+        entrada.nextLine(); 
+    }
+
+    // ayudas para lectura
+    public static int leerEntero(String mensaje) {
+        System.out.print(mensaje);
+        while (!entrada.hasNextInt()) {
+            System.out.println("Por favor ingrese un número entero válido.");
+            entrada.next();
             System.out.print(mensaje);
-            valor = scanner.nextDouble();
-            if (valor <= 0) {
-                System.out.println("El valor debe ser mayor que 0. Intente de nuevo.");
-            }
-        } while (valor <= 0);
+        }
+        int valor = entrada.nextInt();
+        entrada.nextLine(); 
         return valor;
     }
 
-    /**
-     * Muestra el resultado final de un calculo dentro de un recuadro,
-     * junto con el nombre de la figura y la formula utilizada.
-     * Se centraliza aqui para que todos los resultados (areas y volumenes)
-     * se vean con el mismo estilo visual.
-     */
-    public static void mostrarResultado(String figura, String formula, double resultado) {
-        System.out.println("|");
-        System.out.println("|  Figura : " + figura);
-        System.out.println("|  Formula: " + formula);
-        System.out.println("|  Resultado: " + resultado);
-        System.out.println("|");
-        linea();
+    public static float leerFloat() {
+        while (!entrada.hasNextFloat()) {
+            System.out.println("Por favor ingrese un número válido.");
+            entrada.next();
+        }
+        return entrada.nextFloat();
     }
 
-    // ==========================================================
-    //                  SUBMENUS DE NAVEGACION
-    // ==========================================================
-
-    /**
-     * Muestra el submenu de figuras para calcular AREA y, segun la
-     * figura elegida, llama a la funcion de calculo correspondiente.
-     */
-    public static void menuAreas() {
-        int opcion;
-
-        do {
-            opcion = menu("1- Cuadrado\n2- Triangulo\n3- Circulo\n4- Hexagono\n5- Volver al menu principal", 5);
-
-            switch (opcion) {
-                case 1:
-                    areaCuadrado();
-                    pausar();
-                    break;
-                case 2:
-                    areaTriangulo();
-                    pausar();
-                    break;
-                case 3:
-                    areaCirculo();
-                    pausar();
-                    break;
-                case 4:
-                    areaHexagono();
-                    pausar();
-                    break;
-                case 5:
-                    // Volver: solo termina el ciclo 
-                    break;
-            }
-
-        } while (opcion != 5);
-    }
-
-    /**
-     * Muestra el submenu de figuras para calcular VOLUMEN y, segun la
-     * figura elegida, llama a la funcion de calculo correspondiente.
-     */
-    public static void menuVolumenes() {
-        int opcion;
-
-        do {
-            opcion = menu("1- Cubo\n2- Cilindro\n3- Esfera\n4- Volver al menu principal", 4);
-
-            switch (opcion) {
-                case 1:
-                    volumenCubo();
-                    pausar();
-                    break;
-                case 2:
-                    volumenCilindro();
-                    pausar();
-                    break;
-                case 3:
-                    volumenEsfera();
-                    pausar();
-                    break;
-                case 4:
-                    // Volver: solo termina el ciclo
-                    break;
-            }
-
-        } while (opcion != 4);
-    }
-
-    // ==========================================================
-    //                  CALCULOS DE AREA
-    // ==========================================================
-
-    /**
-     * Calcula el area de un cuadrado. donde operacion es  area = lado al cuadrado.
-     */
-    public static void areaCuadrado() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  AREA DEL CUADRADO");
-        double lado = leerPositivo("Ingrese el lado: ");
-
-        double area = lado * lado;
-        mostrarResultado("CUADRADO", "lado^2", area);
-    }
-
-    /**
-     * Calcula el area de un triangulo. Pide la base y la altura
-     *  formila area = (base * altura) / 2.
-     */
-    public static void areaTriangulo() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  AREA DEL TRIANGULO");
-        double base = leerPositivo("Ingrese la base: ");
-        double altura = leerPositivo("Ingrese la altura: ");
-
-        double area = (base * altura) / 2;
-        mostrarResultado("TRIANGULO", "(base * altura) / 2", area);
-    }
-
-    /**
-     * Calcula el area de un circulo.
-     *  formula: area = PI * radio al cuadrado.
-     */
-    public static void areaCirculo() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  AREA DEL CIRCULO");
-        double radio = leerPositivo("Ingrese el radio: ");
-
-        double area = Math.PI * Math.pow(radio, 2);
-        mostrarResultado("CIRCULO", "PI * radio^2", area);
-    }
-
-    /**
-     * Calcula el area de un hexagono regular.
-     *  formula area = (3 * raiz(3) / 2) * lado al cuadrado.
-     */
-    public static void areaHexagono() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  AREA DEL HEXAGONO");
-        double lado = leerPositivo("Ingrese el lado: ");
-
-        double area = (3 * Math.sqrt(3) / 2) * Math.pow(lado, 2);
-        mostrarResultado("HEXAGONO", "(3 * raiz(3) / 2) * lado^2", area);
-    }
-
-    // ==========================================================
-    //                  CALCULOS DE VOLUMEN
-    // ==========================================================
-
-    /**
-     * Calcula el volumen de un cubo. formula volumen = arista al cubo.
-     */
-    public static void volumenCubo() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  VOLUMEN DEL CUBO");
-        double arista = leerPositivo("Ingrese la arista: ");
-
-        double volumen = Math.pow(arista, 3);
-        mostrarResultado("CUBO", "arista^3", volumen);
-    }
-
-    /**
-     * Calcula el volumen de un cilindro.
-     * formula = PI * radio al cuadrado * altura.
-     */
-    public static void volumenCilindro() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  VOLUMEN DEL CILINDRO");
-        double radio = leerPositivo("Ingrese el radio: ");
-        double altura = leerPositivo("Ingrese la altura: ");
-
-        double volumen = Math.PI * Math.pow(radio, 2) * altura;
-        mostrarResultado("CILINDRO", "PI * radio^2 * altura", volumen);
-    }
-
-    /**
-     * Calcula el volumen de una esfera. formula  = (4/3) * PI * radio al cubo.
-     */
-    public static void volumenEsfera() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  VOLUMEN DE LA ESFERA");
-        double radio = leerPositivo("Ingrese el radio: ");
-
-        double volumen = (4.0 / 3.0) * Math.PI * Math.pow(radio, 3);
-        mostrarResultado("ESFERA", "(4/3) * PI * radio^3", volumen);
-    }
-
-    /**
-     * mensaje de despedida al dar salir al codigo
-     */
-    public static void salir() {
-        limpiarPantalla();
-        encabezado();
-        System.out.println("|  Gracias por usar el sistema de calculo");
-        System.out.println("|  de areas y volumenes.");
-        linea();
+    public static boolean posicionValida(int pos) {
+        return pos >= 0 && pos < totalEmpleados;
     }
 }
